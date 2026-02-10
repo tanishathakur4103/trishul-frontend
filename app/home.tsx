@@ -424,6 +424,8 @@ import {
   Alert,
   Animated,
 } from "react-native";
+
+import MatchFound from "../components/MatchFound";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { io, Socket } from "socket.io-client";
@@ -431,79 +433,96 @@ import { Ionicons } from "@expo/vector-icons";
 import AppHeader from "../components/AppHeader";
 import BASE_URL from "../src/config/api";
 
-
 export default function HomeScreen() {
   const router = useRouter();
   const socketRef = useRef<Socket | null>(null);
+
   const [isSearching, setIsSearching] = useState(false);
-  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const [showMatch, setShowMatch] = useState(false);
+
+
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const ringAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    const initSocket = async () => {
-      const token = await AsyncStorage.getItem("token");
-      if (!token) {
-        router.replace("/login");
-        return;
-      }
+  let socket: Socket | null = null;
 
-      const socket = io(BASE_URL, {
-        auth: { token },
-        transports: ["websocket"],
-      });
+  const initSocket = async () => {
+    const token = await AsyncStorage.getItem("token");
+    if (!token) return;
 
-      socketRef.current = socket;
+    socket = io(BASE_URL, {
+      auth: { token },
+      transports: ["websocket"],
+    });
 
-      socket.on("waiting", () => {
-        setIsSearching(true);
-      });
+    socketRef.current = socket;
 
-      socket.on("match-found", () => {
-        setIsSearching(false);
-        router.push("/chat");
-      });
+    socket.on("waiting", () => setIsSearching(true));
 
-      socket.on("error", ({ message }) => {
-        Alert.alert("Error", message);
-        setIsSearching(false);
-      });
-    };
+    socket.on("match-found", () => {
+  setIsSearching(false);
+  setShowMatch(true); // 🎉 animation start
 
-    initSocket();
+  setTimeout(() => {
+    setShowMatch(false); // animation hide
+    router.push("/chat"); // chat screen
+  }, 1500);
+});
 
-    return () => {
-      socketRef.current?.disconnect();
-      socketRef.current = null;
-    };
-  }, []);
 
-  // Pulse animation for searching state
+    socket.on("error", ({ message }) => {
+      Alert.alert("Error", message);
+      setIsSearching(false);
+    });
+  };
+
+  initSocket();
+
+  // ✅ CLEANUP (only void return)
+  return () => {
+    if (socket) {
+      socket.disconnect();
+      socket = null;
+    }
+  };
+}, []);
+
+
   useEffect(() => {
     if (isSearching) {
       Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, {
-            toValue: 1.1,
-            duration: 800,
-            useNativeDriver: true,
-          }),
-          Animated.timing(pulseAnim, {
+        Animated.parallel([
+          Animated.sequence([
+            Animated.timing(scaleAnim, {
+              toValue: 1.08,
+              duration: 900,
+              useNativeDriver: true,
+            }),
+            Animated.timing(scaleAnim, {
+              toValue: 1,
+              duration: 900,
+              useNativeDriver: true,
+            }),
+          ]),
+          Animated.timing(ringAnim, {
             toValue: 1,
-            duration: 800,
+            duration: 1500,
             useNativeDriver: true,
           }),
         ])
       ).start();
     } else {
-      pulseAnim.setValue(1);
+      scaleAnim.setValue(1);
+      ringAnim.setValue(0);
     }
   }, [isSearching]);
 
   const handleFindPartner = () => {
     if (!socketRef.current?.connected) {
-      Alert.alert("Error", "Not connected to server");
+      Alert.alert("Error", "Server not connected");
       return;
     }
-
     setIsSearching(true);
     socketRef.current.emit("find-match");
   };
@@ -513,297 +532,232 @@ export default function HomeScreen() {
     setIsSearching(false);
   };
 
+  const ringScale = ringAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.6],
+  });
+
+  const ringOpacity = ringAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.4, 0],
+  });
+
   return (
     <SafeAreaView style={styles.container}>
       <AppHeader activeTab="home" />
 
       <View style={styles.content}>
-        {/* Decorative Elements */}
-      
-        <View style={styles.center}>
-         
-          
-          {/* Title Section */}
-          <Text style={styles.title}>
-            {isSearching
-              ? "Finding Your Match..."
-              : "Start a New Conversation"}
-          </Text>
-
-          <Text style={styles.subtitle}>
-            {isSearching
-              ? "Please wait while we connect you with someone"
-              : "Connect anonymously with another student from your university"}
-          </Text>
-
-          {/* Status Indicator */}
+        {/* Animated Hero */}
+        <View style={styles.heroWrapper}>
           {isSearching && (
-            <View style={styles.statusContainer}>
-              <View style={styles.statusDot} />
-              <Text style={styles.statusText}>Searching...</Text>
-            </View>
+            <Animated.View
+              style={[
+                styles.ring,
+                { transform: [{ scale: ringScale }], opacity: ringOpacity },
+              ]}
+            />
           )}
 
-          {/* Main Action Button */}
-          <TouchableOpacity
-            disabled={isSearching}
-            onPress={handleFindPartner}
-            style={[
-              styles.findButton,
-              isSearching && styles.findButtonDisabled,
-            ]}
-            activeOpacity={0.8}
+          <Animated.View
+            style={[styles.heroCircle, { transform: [{ scale: scaleAnim }] }]}
           >
-            {isSearching ? (
-              <View style={styles.buttonContent}>
-                <ActivityIndicator color="#fff" size="small" />
-                <Text style={styles.findButtonText}>Searching</Text>
-              </View>
-            ) : (
-              <View style={styles.buttonContent}>
-                <Ionicons
-                  name="chatbubble-ellipses"
-                  size={20}
-                  color="#fff"
-                />
-                <Text style={styles.findButtonText}>Find Chat Partner</Text>
-              </View>
-            )}
-          </TouchableOpacity>
+            <Ionicons name="chatbubbles" size={42} color="#fff" />
+          </Animated.View>
+        </View>
 
-          {/* Cancel Button */}
-          {isSearching && (
-            <TouchableOpacity
-              onPress={handleCancelSearch}
-              style={styles.cancelButton}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="close-circle" size={18} color="#ef4444" />
-              <Text style={styles.cancelButtonText}>Cancel Search</Text>
-            </TouchableOpacity>
-          )}
+        <Text style={styles.title}>
+          {isSearching ? "Finding your match…" : "Start Anonymous Chat"}
+        </Text>
 
-          {/* Info Cards */}
-          {!isSearching && (
-            <View style={styles.infoCards}>
-              <View style={styles.infoCard}>
-                <Ionicons name="shield-checkmark" size={24} color="#48bb78" />
-                <Text style={styles.infoCardText}>100% Anonymous</Text>
-              </View>
-              <View style={styles.infoCard}>
-                <Ionicons name="people" size={24} color="#5b8def" />
-                <Text style={styles.infoCardText}>Smart Matching</Text>
-              </View>
-              <View style={styles.infoCard}>
-                <Ionicons name="school-outline" size={24} color="#48bb78" />
-                <Text style={styles.infoCardText}>College students</Text>
-              </View>
+        <Text style={styles.subtitle}>
+          {isSearching
+            ? "Hang tight. We’re connecting you with someone"
+            : "Talk freely with students from your university"}
+        </Text>
+
+        <TouchableOpacity
+          disabled={isSearching}
+          onPress={handleFindPartner}
+          activeOpacity={0.85}
+          style={[
+            styles.mainButton,
+            isSearching && styles.mainButtonDisabled,
+          ]}
+        >
+          {isSearching ? (
+            <View style={styles.btnRow}>
+              <ActivityIndicator color="#fff" />
+              <Text style={styles.mainButtonText}>Searching</Text>
+            </View>
+          ) : (
+            <View style={styles.btnRow}>
+              <Ionicons name="search" size={20} color="#fff" />
+              <Text style={styles.mainButtonText}>Find Chat Partner</Text>
             </View>
           )}
-        </View>
+        </TouchableOpacity>
+
+        {isSearching && (
+          <TouchableOpacity
+            onPress={handleCancelSearch}
+            style={styles.cancelBtn}
+          >
+            <Ionicons name="close" size={18} color="#EF4444" />
+            <Text style={styles.cancelText}>Cancel Search</Text>
+          </TouchableOpacity>
+        )}
+
+        {!isSearching && (
+          <View style={styles.features}>
+            <Feature icon="shield-checkmark" text="Anonymous & Safe" />
+            <Feature icon="people" text="Smart Matching" />
+            <Feature icon="school" text="College Only" />
+          </View>
+        )}
       </View>
+      <MatchFound visible={showMatch} />
     </SafeAreaView>
   );
 }
 
+const Feature = ({ icon, text }: any) => (
+  <View style={styles.featureCard}>
+    <Ionicons name={icon} size={22} color="#6366F1" />
+    <Text style={styles.featureText}>{text}</Text>
+  </View>
+);
+
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: "#f7f9fc",
-  },
+  flex: 1,
+  backgroundColor: "#F5F7FF",
+},
 
   content: {
-    flex: 1,
-    justifyContent: "center",
-    padding: 24,
-    position: "relative",
-  },
+  flex: 1,
+  alignItems: "center",
+  justifyContent: "center",
+  paddingHorizontal: 24,
+  paddingBottom: 40,
+},
 
-  // Decorative background circles
-  decorativeCircle1: {
-    position: "absolute",
-    top: -100,
-    right: -100,
-    width: 250,
-    height: 250,
-    borderRadius: 125,
-    backgroundColor: "#e6f0ff",
-    opacity: 0.3,
-  },
 
-  decorativeCircle2: {
-    position: "absolute",
-    bottom: -80,
-    left: -80,
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: "#f0e6ff",
-    opacity: 0.3,
-  },
-
-  center: {
+  heroWrapper: {
+    marginBottom: 28,
     alignItems: "center",
-    zIndex: 1,
-  },
-
-  // Icon Container
-  iconContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: "#ffffff",
     justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 32,
-    shadowColor: "#5b8def",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
   },
 
-  searchingIconWrapper: {
-    justifyContent: "center",
-    alignItems: "center",
-  },
+  heroCircle: {
+  width: 96,
+  height: 96,
+  borderRadius: 48,
+  backgroundColor: "#6366F1",
+  alignItems: "center",
+  justifyContent: "center",
+  shadowColor: "#6366F1",
+  shadowOpacity: 0.6,
+  shadowRadius: 20,
+  elevation: 12,
+},
 
-  ripple: {
+  ring: {
     position: "absolute",
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: "#5b8def",
-    opacity: 0.2,
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    borderWidth: 2,
+    borderColor: "#6366F1",
   },
 
-  // Text Styles
   title: {
-    fontSize: 28,
-    fontWeight: "700",
-    marginBottom: 12,
-    color: "#1a202c",
+    fontSize: 26,
+    fontWeight: "800",
+    color: "#1F2937",
+    marginBottom: 8,
     textAlign: "center",
-    letterSpacing: -0.5,
   },
-
   subtitle: {
-    fontSize: 15,
-    color: "#718096",
+    fontSize: 14,
+    color: "#6B7280",
     textAlign: "center",
     marginBottom: 32,
     lineHeight: 22,
-    paddingHorizontal: 20,
   },
 
-  // Status Indicator
-  statusContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 24,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: "#e6f0ff",
-    borderRadius: 20,
-  },
+  mainButton: {
+  width: "100%",
+  paddingVertical: 18,
+  borderRadius: 22,
+  backgroundColor: "#6366F1",
+  shadowColor: "#6366F1",
+  shadowOpacity: 0.45,
+  shadowRadius: 18,
+  elevation: 10,
+},
+mainButtonDisabled: {
+  backgroundColor: "#A5B4FC",
+  shadowOpacity: 0,
+},
 
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#5b8def",
-  },
-
-  statusText: {
-    fontSize: 14,
-    color: "#5b8def",
-    fontWeight: "600",
-  },
-
-  // Main Button
-  findButton: {
-    backgroundColor: "#5b8def",
-    paddingHorizontal: 40,
-    paddingVertical: 18,
-    borderRadius: 16,
-    shadowColor: "#5b8def",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
-    minWidth: 260,
-  },
-
-  findButtonDisabled: {
-    backgroundColor: "#a0b4d4",
-    shadowOpacity: 0.1,
-  },
-
-  buttonContent: {
+  btnRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
   },
+  mainButtonText: {
+  color: "#fff",
+  fontSize: 17,
+  fontWeight: "800",
+  letterSpacing: 0.4,
+},
 
-  findButtonText: {
-    color: "#ffffff",
-    fontSize: 17,
-    fontWeight: "700",
-    letterSpacing: 0.3,
-  },
+  cancelBtn: {
+  marginTop: 18,
+  flexDirection: "row",
+  alignItems: "center",
+  gap: 6,
+  paddingHorizontal: 16,
+  paddingVertical: 8,
+  borderRadius: 20,
+  backgroundColor: "#FEF2F2",
+  borderWidth: 1,
+  borderColor: "#FECACA",
+},
 
-  // Cancel Button
-  cancelButton: {
-    marginTop: 20,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
-    backgroundColor: "#fff5f5",
-    borderWidth: 1,
-    borderColor: "#fed7d7",
+cancelText: {
+  color: "#EF4444",
+  fontWeight: "700",
+  fontSize: 13,
+},
+
+  features: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
+    marginTop: 40,
+    gap: 14,
   },
+  featureCard: {
+  backgroundColor: "rgba(255,255,255,0.9)",
+  paddingVertical: 16,
+  paddingHorizontal: 18,
+  borderRadius: 18,
+  alignItems: "center",
+  minWidth: 110,
+  shadowColor: "#000",
+  shadowOpacity: 0.08,
+  shadowRadius: 12,
+  elevation: 4,
+  borderWidth: 1,
+  borderColor: "#E5E7EB",
+},
+featureText: {
+  marginTop: 8,
+  fontSize: 12,
+  fontWeight: "700",
+  color: "#1F2937",
+},
 
-  cancelButtonText: {
-    color: "#ef4444",
-    fontSize: 15,
-    fontWeight: "600",
-  },
-
-  // Info Cards
-  infoCards: {
-    flexDirection: "row",
-    marginTop: 48,
-    gap: 12,
-    flexWrap: "wrap",
-    justifyContent: "center",
-  },
-
-  infoCard: {
-    backgroundColor: "#ffffff",
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderRadius: 16,
-    alignItems: "center",
-    gap: 8,
-    minWidth: 100,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-
-  infoCardText: {
-    fontSize: 12,
-    color: "#4a5568",
-    fontWeight: "600",
-    textAlign: "center",
-  },
 });
 
 

@@ -1,88 +1,21 @@
-import React, { useEffect, useRef } from "react";
-import {
-  Animated,
-  ImageSourcePropType,
-  StyleSheet,
-  View,
-} from "react-native";
+import { useEffect } from "react";
+import { View, Text } from "react-native";
 import { useRouter } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const logo: ImageSourcePropType = require("../assets/logo.png");
-
-export default function SplashScreen() {
+export default function Splash() {
   const router = useRouter();
 
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const bounceAnim = useRef(new Animated.Value(0)).current;
-
   useEffect(() => {
-    // 🔹 Start animation
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 1000,
-        useNativeDriver: true,
-      }),
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(bounceAnim, {
-            toValue: -20,
-            duration: 800,
-            useNativeDriver: true,
-          }),
-          Animated.timing(bounceAnim, {
-            toValue: 0,
-            duration: 800,
-            useNativeDriver: true,
-          }),
-        ])
-      ),
-    ]).start();
-
-    // 🔐 Auth check (JWT based)
-    const checkAuth = async () => {
-      const token = await AsyncStorage.getItem("token");
-
-      if (token) {
-        router.replace("/home");
-      } else {
-        router.replace("/email");
-      }
-    };
-
-    // ⏳ Splash delay
-    const timer = setTimeout(checkAuth, 2500);
+    const timer = setTimeout(() => {
+      router.replace("/home");
+    }, 2000); // 2 seconds splash
 
     return () => clearTimeout(timer);
   }, []);
 
   return (
-    <View style={styles.container}>
-      <Animated.Image
-        source={logo}
-        resizeMode="contain"
-        style={[
-          styles.logo,
-          {
-            opacity: fadeAnim,
-            transform: [{ translateY: bounceAnim }],
-          },
-        ]}
-      />
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <Text style={{ fontSize: 24 }}>Welcome</Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#ebe4e4",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  logo: {
-    width: 190,
-    height: 190,
-  },
-});

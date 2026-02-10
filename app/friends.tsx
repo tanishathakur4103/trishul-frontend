@@ -182,7 +182,7 @@ export default function FriendsScreen() {
 
   const fetchFriends = async () => {
     const token = await AsyncStorage.getItem("token");
-
+       
     const res = await fetch(`${BASE_URL}/api/requests/friends`, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -258,54 +258,43 @@ export default function FriendsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#e8edf3",
+    backgroundColor: "#F9FAFB",
     paddingHorizontal: 16,
   },
 
-  headerSection: {
-    marginTop: 16,
-    marginBottom: 12,
-  },
-
-  header: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#1e293b",
-    textAlign: "center",
-  },
-
   listContainer: {
+    paddingTop: 10,
     paddingBottom: 20,
   },
 
   card: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
     padding: 14,
     marginBottom: 12,
     shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 4,
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
   },
 
   avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "#e0e7ff",
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "#EEF2FF",
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 12,
+    marginRight: 14,
   },
 
   avatarText: {
     fontSize: 20,
     fontWeight: "700",
-    color: "#4338ca",
+    color: "#6366F1",
   },
 
   info: {
@@ -315,7 +304,7 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#1e293b",
+    color: "#1F2937",
     marginBottom: 4,
   },
 
@@ -328,35 +317,35 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#22c55e",
+    backgroundColor: "#22C55E",
     marginRight: 6,
   },
 
   lastMessage: {
     fontSize: 14,
-    color: "#64748b",
-    fontStyle: "italic",
+    color: "#6B7280",
   },
 
   rightSection: {
     alignItems: "flex-end",
+    marginLeft: 6,
   },
 
   timestamp: {
     fontSize: 12,
-    color: "#94a3b8",
+    color: "#9CA3AF",
   },
 
   emptyContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 100,
+    marginTop: 120,
   },
 
   emptyText: {
     textAlign: "center",
-    color: "#64748b",
+    color: "#6B7280",
     fontSize: 15,
   },
 });

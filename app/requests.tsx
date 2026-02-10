@@ -1,4 +1,4 @@
-//request.tsx
+//requests.tsx
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -65,7 +65,7 @@ export default function Requests() {
 
   return (
     <View style={styles.container}>
-                  <AppHeader activeTab="request" />
+                  <AppHeader activeTab="requests" />
       
       {/* <Text style={styles.header}>Friend Requests</Text> */}
 
@@ -109,77 +109,76 @@ export default function Requests() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8fafc",
+    backgroundColor: "#F9FAFB",
     paddingHorizontal: 16,
-    paddingTop: 16,
-  },
-
-  header: {
-    fontSize: 22,
-    fontWeight: "700",
-    marginBottom: 12,
-    color: "#0f172a",
+    paddingTop: 8,
   },
 
   card: {
-    backgroundColor: "#ffffff",
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 12,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 14,
     shadowColor: "#000",
     shadowOpacity: 0.05,
-    shadowRadius: 6,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
     elevation: 3,
   },
 
   name: {
     fontSize: 16,
-    fontWeight: "600",
-    color: "#0f172a",
+    fontWeight: "700",
+    color: "#1F2937",
   },
 
   subtitle: {
     fontSize: 13,
-    color: "#64748b",
+    color: "#6B7280",
     marginTop: 2,
   },
 
   actions: {
     flexDirection: "row",
-    marginTop: 12,
+    marginTop: 14,
     gap: 10,
   },
 
   btn: {
     flex: 1,
-    paddingVertical: 10,
-    borderRadius: 10,
+    paddingVertical: 12,
+    borderRadius: 14,
     alignItems: "center",
   },
 
   acceptBtn: {
-    backgroundColor: "#dcfce7",
+    backgroundColor: "#ECFDF5",
+    borderWidth: 1,
+    borderColor: "#A7F3D0",
   },
 
   rejectBtn: {
-    backgroundColor: "#fee2e2",
+    backgroundColor: "#FEF2F2",
+    borderWidth: 1,
+    borderColor: "#FECACA",
   },
 
   acceptText: {
-    color: "#15803d",
-    fontWeight: "600",
+    color: "#059669",
+    fontWeight: "700",
+    fontSize: 14,
   },
 
   rejectText: {
-    color: "#b91c1c",
-    fontWeight: "600",
+    color: "#DC2626",
+    fontWeight: "700",
+    fontSize: 14,
   },
 
   emptyText: {
     textAlign: "center",
-    marginTop: 60,
-    color: "#64748b",
+    marginTop: 120,
+    color: "#6B7280",
     fontSize: 15,
   },
 });
-

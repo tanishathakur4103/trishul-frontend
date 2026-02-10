@@ -339,25 +339,26 @@ export default function PrivateChat() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#e8edf3",
+    backgroundColor: "#F9FAFB",
   },
 
+  /* ================= HEADER ================= */
   header: {
     height: 64,
-    backgroundColor: "#5b8def",
+    backgroundColor: "#6366F1",
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 12,
     paddingTop: Platform.OS === "ios" ? 8 : 0,
     shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
     elevation: 4,
   },
 
   backBtn: {
-    padding: 4,
-    marginRight: 8,
+    padding: 6,
+    marginRight: 6,
   },
 
   headerInfo: {
@@ -372,10 +373,10 @@ const styles = StyleSheet.create({
   },
 
   avatar: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: "#ffffff",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -383,19 +384,19 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#5b8def",
+    color: "#6366F1",
   },
 
   onlineDot: {
     position: "absolute",
-    bottom: 0,
-    right: 0,
+    bottom: 1,
+    right: 1,
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: "#22c55e",
+    backgroundColor: "#22C55E",
     borderWidth: 2,
-    borderColor: "#5b8def",
+    borderColor: "#6366F1",
   },
 
   nameSection: {
@@ -403,72 +404,75 @@ const styles = StyleSheet.create({
   },
 
   headerTitle: {
-    color: "#fff",
-    fontSize: 17,
+    color: "#FFFFFF",
+    fontSize: 16,
     fontWeight: "700",
   },
 
   subTitle: {
-    fontSize: 13,
-    color: "#e0e7ff",
+    fontSize: 12,
+    color: "#E0E7FF",
     marginTop: 2,
   },
 
   headerActions: {
     flexDirection: "row",
-    gap: 8,
+    gap: 6,
   },
 
   headerIconBtn: {
     padding: 6,
   },
 
+  /* ================= CHAT ================= */
   chatArea: {
     padding: 16,
     paddingBottom: 20,
   },
 
   bubble: {
-    maxWidth: "75%",
-    padding: 12,
-    borderRadius: 16,
-    marginVertical: 4,
+    maxWidth: "78%",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 18,
+    marginVertical: 5,
   },
 
   myBubble: {
-    backgroundColor: "#5b8def",
+    backgroundColor: "#6366F1",
     alignSelf: "flex-end",
-    borderBottomRightRadius: 4,
+    borderBottomRightRadius: 6,
   },
 
   otherBubble: {
-    backgroundColor: "#ffffff",
+    backgroundColor: "#FFFFFF",
     alignSelf: "flex-start",
-    borderBottomLeftRadius: 4,
+    borderBottomLeftRadius: 6,
     shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
     elevation: 2,
   },
 
   msgText: {
     fontSize: 15,
-    lineHeight: 20,
-    color: "#1e293b",
+    lineHeight: 21,
+    color: "#1F2937",
   },
 
+  /* ================= INPUT ================= */
   inputContainer: {
-    backgroundColor: "#ffffff",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     borderTopWidth: 1,
-    borderTopColor: "#e2e8f0",
+    borderTopColor: "#E5E7EB",
   },
 
   inputRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f1f5f9",
+    backgroundColor: "#F1F5F9",
     borderRadius: 28,
     paddingHorizontal: 4,
     paddingVertical: 4,
@@ -484,15 +488,14 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: 8,
     fontSize: 15,
-    color: "#0f172a",
+    color: "#1F2937",
     maxHeight: 100,
-    borderWidth: 0,
   },
 
   sendBtn: {
-    backgroundColor: "#5b8def",
+    backgroundColor: "#6366F1",
     width: 40,
     height: 40,
     borderRadius: 20,
