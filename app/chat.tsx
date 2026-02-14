@@ -1,98 +1,187 @@
-import Typing from "../components/Typing";
-import { View, Text, StyleSheet, TextInput } from "react-native";
-import { COLORS } from "./theme";
-import React, { useState ,useEffect } from "react";
-// import { socket } from "../socket";
-import { getSocket, connectSocket, disconnectSocket } from "../hooks/socket";
+import React, { useState, useRef, useEffect } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  FlatList,
+  StyleSheet,
+  Pressable,
+  ImageBackground,
+  Animated,
+  Switch,
+} from "react-native";
 
 
+interface Message {
+  id: string;
+  text: string;
+  sender: "me" | "other";
+  read?: boolean;
+}
 
+export default function ChatScreen() {
+  const [messages, setMessages] = useState<Message[]>([
+    { id: "1", text: "Hey Tanisha 👋", sender: "other", read: true },
+  ]);
+  const [input, setInput] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const [darkMode, setDarkMode] = useState(true);
 
-export default function Chat() {
-  useEffect(() => {
-  if (!socket) return;
+  const flatListRef = useRef<FlatList>(null);
 
-  socket.on("typing", () => {
+  const sendMessage = () => {
+    if (!input.trim()) return;
+
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      text: input,
+      sender: "me",
+      read: false,
+    };
+
+    setMessages((prev) => [...prev, newMessage]);
+    setInput("");
+
+    // Simulate typing + reply
     setIsTyping(true);
-  });
-
-  socket.on("stopTyping", () => {
-    setIsTyping(false);
-  });
-
-  return () => {
-    socket.off("typing");
-    socket.off("stopTyping");
+    setTimeout(() => {
+      setIsTyping(false);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          text: "Nice 😄",
+          sender: "other",
+          read: true,
+        },
+      ]);
+    }, 2000);
   };
-}, []);
 
+  useEffect(() => {
+    flatListRef.current?.scrollToEnd({ animated: true });
+  }, [messages]);
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.connected}>✨ Connected!</Text>
+  const renderItem = ({ item }: { item: Message }) => (
+    <View
+      style={[
+        styles.messageContainer,
+        item.sender === "me"
+          ? styles.myMessage
+          : styles.otherMessage,
+      ]}
+    >
+      <Text style={styles.messageText}>{item.text}</Text>
 
-      <View style={styles.bubbleLeft}>
-        <Text>Hey! How’s college life?</Text>
-      </View>
-
-      <View style={styles.bubbleRight}>
-        <Text>Pretty good 😄 What about you?</Text>
-      </View>
-
-      {isTyping && <Typing />}
-
-
-      <TextInput
-  placeholder="Write a message..."
-  style={styles.input}
-  onChangeText={(text) => {
-    if (socket) {
-      if (text.length > 0) {
-        socket.emit("typing");
-      } else {
-        socket.emit("stopTyping");
-      }
-    }
-  }}
-/>
-
-
+      {item.sender === "me" && (
+        <Text style={[styles.tick, item.read && { color: "#4FC3F7" }]}>
+          ✓✓
+        </Text>
+      )}
     </View>
   );
-}
-const [isTyping, setIsTyping] = useState(false);
-const socket = getSocket();
 
+  return (
+    <ImageBackground
+      source={require("../assets/chat-bg.jpg")} // Add your bg image
+      style={styles.background}
+      blurRadius={darkMode ? 5 : 0}
+    >
+      <View
+        style={[
+          styles.container,
+          { backgroundColor: darkMode ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.6)" },
+        ]}
+      >
+        <View style={styles.header}>
+          <Text style={styles.headerText}>Premium Chat</Text>
+          <Switch value={darkMode} onValueChange={setDarkMode} />
+        </View>
+
+        <FlatList
+          ref={flatListRef}
+          data={messages}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+        />
+
+        {isTyping && (
+          <Text style={styles.typing}>Typing...</Text>
+        )}
+
+        <View style={styles.inputContainer}>
+          <TextInput
+            value={input}
+            onChangeText={setInput}
+            placeholder="Type a message..."
+            style={styles.input}
+            placeholderTextColor="#aaa"
+          />
+          <Pressable style={styles.sendButton} onPress={sendMessage}>
+            <Text style={{ color: "#fff" }}>Send</Text>
+          </Pressable>
+        </View>
+      </View>
+    </ImageBackground>
+  );
+}
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-    padding: 16,
-  },
-  connected: {
-    textAlign: "center",
-    marginVertical: 10,
-    color: COLORS.muted,
-  },
-  bubbleLeft: {
-    backgroundColor: COLORS.white,
-    padding: 12,
-    borderRadius: 16,
-    alignSelf: "flex-start",
+  background: { flex: 1 },
+  container: { flex: 1, padding: 15 },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 10,
   },
-  bubbleRight: {
-    backgroundColor: "#E0E7FF",
+  headerText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#fff",
+  },
+  messageContainer: {
     padding: 12,
-    borderRadius: 16,
+    borderRadius: 20,
+    marginVertical: 5,
+    maxWidth: "75%",
+  },
+  myMessage: {
     alignSelf: "flex-end",
-    marginBottom: 10,
+    backgroundColor: "rgba(0,150,136,0.7)",
+  },
+  otherMessage: {
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(255,255,255,0.2)",
+  },
+  messageText: { color: "#fff" },
+  tick: {
+    fontSize: 10,
+    alignSelf: "flex-end",
+    marginTop: 5,
+    color: "#ccc",
+  },
+  typing: {
+    fontStyle: "italic",
+    color: "#ddd",
+    marginVertical: 5,
+  },
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 10,
   },
   input: {
-    backgroundColor: COLORS.white,
-    padding: 14,
-    borderRadius: 30,
-    marginTop: "auto",
+    flex: 1,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    borderRadius: 20,
+    paddingHorizontal: 15,
+    color: "#fff",
+  },
+  sendButton: {
+    marginLeft: 10,
+    backgroundColor: "#00BFA5",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
   },
 });

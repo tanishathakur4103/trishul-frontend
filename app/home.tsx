@@ -413,352 +413,329 @@
 
 
 // app/home.tsx
-import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
-  TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
-  ActivityIndicator,
-  Alert,
-  Animated,
+  ScrollView,
+  Pressable,
+  Dimensions,
 } from "react-native";
-
-import MatchFound from "../components/MatchFound";
-import { useRouter } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { io, Socket } from "socket.io-client";
+import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
-import AppHeader from "../components/AppHeader";
-import BASE_URL from "../src/config/api";
 
-export default function HomeScreen() {
-  const router = useRouter();
-  const socketRef = useRef<Socket | null>(null);
+const { width } = Dimensions.get("window");
 
-  const [isSearching, setIsSearching] = useState(false);
-  const [showMatch, setShowMatch] = useState(false);
-
-
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-  const ringAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-  let socket: Socket | null = null;
-
-  const initSocket = async () => {
-    const token = await AsyncStorage.getItem("token");
-    if (!token) return;
-
-    socket = io(BASE_URL, {
-      auth: { token },
-      transports: ["websocket"],
-    });
-
-    socketRef.current = socket;
-
-    socket.on("waiting", () => setIsSearching(true));
-
-    socket.on("match-found", () => {
-  setIsSearching(false);
-  setShowMatch(true); // 🎉 animation start
-
-  setTimeout(() => {
-    setShowMatch(false); // animation hide
-    router.push("/chat"); // chat screen
-  }, 1500);
-});
-
-
-    socket.on("error", ({ message }) => {
-      Alert.alert("Error", message);
-      setIsSearching(false);
-    });
-  };
-
-  initSocket();
-
-  // ✅ CLEANUP (only void return)
-  return () => {
-    if (socket) {
-      socket.disconnect();
-      socket = null;
-    }
-  };
-}, []);
-
-
-  useEffect(() => {
-    if (isSearching) {
-      Animated.loop(
-        Animated.parallel([
-          Animated.sequence([
-            Animated.timing(scaleAnim, {
-              toValue: 1.08,
-              duration: 900,
-              useNativeDriver: true,
-            }),
-            Animated.timing(scaleAnim, {
-              toValue: 1,
-              duration: 900,
-              useNativeDriver: true,
-            }),
-          ]),
-          Animated.timing(ringAnim, {
-            toValue: 1,
-            duration: 1500,
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
-    } else {
-      scaleAnim.setValue(1);
-      ringAnim.setValue(0);
-    }
-  }, [isSearching]);
-
-  const handleFindPartner = () => {
-    if (!socketRef.current?.connected) {
-      Alert.alert("Error", "Server not connected");
-      return;
-    }
-    setIsSearching(true);
-    socketRef.current.emit("find-match");
-  };
-
-  const handleCancelSearch = () => {
-    socketRef.current?.emit("cancel-search");
-    setIsSearching(false);
-  };
-
-  const ringScale = ringAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [1, 1.6],
-  });
-
-  const ringOpacity = ringAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.4, 0],
-  });
-
+export default function Home() {
   return (
-    <SafeAreaView style={styles.container}>
-      <AppHeader activeTab="home" />
+    <LinearGradient
+      colors={["#F3F0FF", "#E9D8FD", "#DDD6FE"]}
+      style={styles.container}
+    >
+      <ScrollView showsVerticalScrollIndicator={false}>
 
-      <View style={styles.content}>
-        {/* Animated Hero */}
-        <View style={styles.heroWrapper}>
-          {isSearching && (
-            <Animated.View
-              style={[
-                styles.ring,
-                { transform: [{ scale: ringScale }], opacity: ringOpacity },
-              ]}
-            />
-          )}
-
-          <Animated.View
-            style={[styles.heroCircle, { transform: [{ scale: scaleAnim }] }]}
-          >
-            <Ionicons name="chatbubbles" size={42} color="#fff" />
-          </Animated.View>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.homeText}>Home</Text>
+          <View style={styles.notification}>
+            <Ionicons name="notifications-outline" size={22} color="#7C3AED" />
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>2</Text>
+            </View>
+          </View>
         </View>
 
-        <Text style={styles.title}>
-          {isSearching ? "Finding your match…" : "Start Anonymous Chat"}
-        </Text>
+        {/* Top Selector Tabs */}
+        {/* <View style={styles.tabs}>
+          <Text style={styles.activeTab}>Anonymous</Text>
+          <Text style={styles.tab}>Requests</Text>
+          <Text style={styles.tab}>Friends</Text>
+          <Text style={styles.tab}>Settings</Text>
+        </View> */}
 
-        <Text style={styles.subtitle}>
-          {isSearching
-            ? "Hang tight. We’re connecting you with someone"
-            : "Talk freely with students from your university"}
-        </Text>
-
-        <TouchableOpacity
-          disabled={isSearching}
-          onPress={handleFindPartner}
-          activeOpacity={0.85}
-          style={[
-            styles.mainButton,
-            isSearching && styles.mainButtonDisabled,
-          ]}
+        {/* Premium Hero Card */}
+        <LinearGradient
+          colors={["#C084FC", "#7C3AED"]}
+          style={styles.heroCard}
         >
-          {isSearching ? (
-            <View style={styles.btnRow}>
-              <ActivityIndicator color="#fff" />
-              <Text style={styles.mainButtonText}>Searching</Text>
-            </View>
-          ) : (
-            <View style={styles.btnRow}>
-              <Ionicons name="search" size={20} color="#fff" />
-              <Text style={styles.mainButtonText}>Find Chat Partner</Text>
-            </View>
-          )}
-        </TouchableOpacity>
+          <Text style={styles.heroTitle}>
+            Chat Anonymously with College Peers
+          </Text>
 
-        {isSearching && (
-          <TouchableOpacity
-            onPress={handleCancelSearch}
-            style={styles.cancelBtn}
-          >
-            <Ionicons name="close" size={18} color="#EF4444" />
-            <Text style={styles.cancelText}>Cancel Search</Text>
-          </TouchableOpacity>
-        )}
+          <Pressable style={styles.heroButton}>
+            <Text style={styles.heroButtonText}>Start Chat</Text>
+          </Pressable>
+        </LinearGradient>
 
-        {!isSearching && (
-          <View style={styles.features}>
-            <Feature icon="shield-checkmark" text="Anonymous & Safe" />
-            <Feature icon="people" text="Smart Matching" />
-            <Feature icon="school" text="College Only" />
+        {/* Friend Requests */}
+        <Text style={styles.sectionTitle}>Friend Requests</Text>
+
+        <View style={styles.row}>
+          {["Rahul", "Priya"].map((name, i) => (
+            <View key={i} style={styles.requestCard}>
+              <View style={styles.avatar} />
+              <Text style={styles.name}>{name}</Text>
+
+              <View style={styles.requestButtons}>
+                <Pressable style={styles.acceptBtn}>
+                  <Text style={styles.acceptText}>Accept</Text>
+                </Pressable>
+                <Pressable style={styles.rejectBtn}>
+                  <Ionicons name="close" size={16} color="white" />
+                </Pressable>
+              </View>
+            </View>
+          ))}
+        </View>
+
+        {/* Friends Section */}
+        <Text style={styles.sectionTitle}>Your Friends</Text>
+
+        <View style={styles.friendCard}>
+          <View style={styles.avatar} />
+          <View>
+            <Text style={styles.name}>Aman</Text>
+            <Text style={styles.online}>Online</Text>
           </View>
-        )}
+        </View>
+
+        <View style={styles.friendCard}>
+          <View style={styles.avatar} />
+          <View>
+            <Text style={styles.name}>Sneha</Text>
+            <Text style={styles.offline}>Offline</Text>
+          </View>
+        </View>
+
+        {/* Settings */}
+        <Text style={styles.sectionTitle}>Settings</Text>
+
+        <View style={styles.settingsCard}>
+          <View style={styles.settingRow}>
+            <Ionicons name="person-outline" size={20} color="#7C3AED" />
+            <Text style={styles.settingText}>Edit Profile</Text>
+          </View>
+
+          <View style={styles.settingRow}>
+            <Ionicons name="log-out-outline" size={20} color="#EF4444" />
+            <Text style={[styles.settingText, { color: "#EF4444" }]}>
+              Logout
+            </Text>
+          </View>
+        </View>
+
+        <View style={{ height: 120 }} />
+      </ScrollView>
+
+      {/* Premium Bottom Navbar */}
+      <View style={styles.bottomNav}>
+        <Ionicons name="chatbubble" size={26} color="#7C3AED" />
+        <Ionicons name="mail-outline" size={26} color="#9CA3AF" />
+        <Ionicons name="people-outline" size={26} color="#9CA3AF" />
+        <Ionicons name="settings-outline" size={26} color="#9CA3AF" />
       </View>
-      <MatchFound visible={showMatch} />
-    </SafeAreaView>
+    </LinearGradient>
   );
 }
 
-const Feature = ({ icon, text }: any) => (
-  <View style={styles.featureCard}>
-    <Ionicons name={icon} size={22} color="#6366F1" />
-    <Text style={styles.featureText}>{text}</Text>
-  </View>
-);
-
 const styles = StyleSheet.create({
   container: {
-  flex: 1,
-  backgroundColor: "#F5F7FF",
-},
+    flex: 1,
+    paddingTop: 55,
+    paddingHorizontal: 20,
+  },
 
-  content: {
-  flex: 1,
-  alignItems: "center",
-  justifyContent: "center",
-  paddingHorizontal: 24,
-  paddingBottom: 40,
-},
-
-
-  heroWrapper: {
-    marginBottom: 28,
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    justifyContent: "center",
+    marginBottom: 20,
   },
 
-  heroCircle: {
-  width: 96,
-  height: 96,
-  borderRadius: 48,
-  backgroundColor: "#6366F1",
-  alignItems: "center",
-  justifyContent: "center",
-  shadowColor: "#6366F1",
-  shadowOpacity: 0.6,
-  shadowRadius: 20,
-  elevation: 12,
-},
-
-  ring: {
-    position: "absolute",
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-    borderWidth: 2,
-    borderColor: "#6366F1",
-  },
-
-  title: {
-    fontSize: 26,
+  homeText: {
+    fontSize: 28,
     fontWeight: "800",
-    color: "#1F2937",
-    marginBottom: 8,
-    textAlign: "center",
+    color: "#4C1D95",
   },
-  subtitle: {
-    fontSize: 14,
+
+  notification: {
+    position: "relative",
+  },
+
+  badge: {
+    position: "absolute",
+    right: -6,
+    top: -6,
+    backgroundColor: "#EF4444",
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  badgeText: {
+    color: "white",
+    fontSize: 10,
+    fontWeight: "700",
+  },
+
+  tabs: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 25,
+  },
+
+  activeTab: {
+    fontWeight: "700",
+    color: "#7C3AED",
+    borderBottomWidth: 3,
+    borderBottomColor: "#7C3AED",
+    paddingBottom: 6,
+  },
+
+  tab: {
     color: "#6B7280",
-    textAlign: "center",
-    marginBottom: 32,
-    lineHeight: 22,
   },
 
-  mainButton: {
-  width: "100%",
-  paddingVertical: 18,
-  borderRadius: 22,
-  backgroundColor: "#6366F1",
-  shadowColor: "#6366F1",
-  shadowOpacity: 0.45,
-  shadowRadius: 18,
-  elevation: 10,
-},
-mainButtonDisabled: {
-  backgroundColor: "#A5B4FC",
-  shadowOpacity: 0,
-},
+  heroCard: {
+    borderRadius: 25,
+    padding: 25,
+    marginBottom: 30,
+    shadowColor: "#7C3AED",
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 8,
+  },
 
-  btnRow: {
+  heroTitle: {
+    color: "white",
+    fontSize: 20,
+    fontWeight: "700",
+    marginBottom: 18,
+  },
+
+  heroButton: {
+    backgroundColor: "white",
+    paddingVertical: 12,
+    borderRadius: 30,
+    alignItems: "center",
+  },
+
+  heroButtonText: {
+    color: "#7C3AED",
+    fontWeight: "700",
+  },
+
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#4C1D95",
+    marginBottom: 12,
+  },
+
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 25,
+  },
+
+  requestCard: {
+    width: width * 0.42,
+    backgroundColor: "rgba(255,255,255,0.7)",
+    borderRadius: 20,
+    padding: 15,
+    alignItems: "center",
+    backdropFilter: "blur(10px)",
+  },
+
+  avatar: {
+    width: 55,
+    height: 55,
+    borderRadius: 30,
+    backgroundColor: "#DDD6FE",
+    marginBottom: 10,
+  },
+
+  name: {
+    fontWeight: "700",
+    marginBottom: 8,
+  },
+
+  requestButtons: {
+    flexDirection: "row",
+    gap: 8,
+  },
+
+  acceptBtn: {
+    backgroundColor: "#7C3AED",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 15,
+  },
+
+  acceptText: {
+    color: "white",
+    fontSize: 12,
+  },
+
+  rejectBtn: {
+    backgroundColor: "#EF4444",
+    padding: 6,
+    borderRadius: 15,
+  },
+
+  friendCard: {
+    backgroundColor: "rgba(255,255,255,0.8)",
+    borderRadius: 20,
+    padding: 15,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
+    gap: 12,
+    marginBottom: 15,
   },
-  mainButtonText: {
-  color: "#fff",
-  fontSize: 17,
-  fontWeight: "800",
-  letterSpacing: 0.4,
-},
 
-  cancelBtn: {
-  marginTop: 18,
-  flexDirection: "row",
-  alignItems: "center",
-  gap: 6,
-  paddingHorizontal: 16,
-  paddingVertical: 8,
-  borderRadius: 20,
-  backgroundColor: "#FEF2F2",
-  borderWidth: 1,
-  borderColor: "#FECACA",
-},
+  online: {
+    color: "#10B981",
+    fontSize: 12,
+  },
 
-cancelText: {
-  color: "#EF4444",
-  fontWeight: "700",
-  fontSize: 13,
-},
+  offline: {
+    color: "#9CA3AF",
+    fontSize: 12,
+  },
 
-  features: {
+  settingsCard: {
+    backgroundColor: "rgba(255,255,255,0.8)",
+    borderRadius: 20,
+    padding: 18,
+  },
+
+  settingRow: {
     flexDirection: "row",
-    marginTop: 40,
-    gap: 14,
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 15,
   },
-  featureCard: {
-  backgroundColor: "rgba(255,255,255,0.9)",
-  paddingVertical: 16,
-  paddingHorizontal: 18,
-  borderRadius: 18,
-  alignItems: "center",
-  minWidth: 110,
-  shadowColor: "#000",
-  shadowOpacity: 0.08,
-  shadowRadius: 12,
-  elevation: 4,
-  borderWidth: 1,
-  borderColor: "#E5E7EB",
-},
-featureText: {
-  marginTop: 8,
-  fontSize: 12,
-  fontWeight: "700",
-  color: "#1F2937",
-},
 
+  settingText: {
+    fontWeight: "600",
+  },
+
+  bottomNav: {
+    position: "absolute",
+    bottom: 20,
+    left: 20,
+    right: 20,
+    height: 65,
+    backgroundColor: "white",
+    borderRadius: 35,
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+    shadowColor: "#7C3AED",
+    shadowOpacity: 0.2,
+    shadowRadius: 15,
+    elevation: 10,
+  },
 });
-
-
-

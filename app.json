@@ -8,17 +8,14 @@
     "scheme": "trishulfrontend",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-
     "ios": {
       "supportsTablet": true
     },
-
     "android": {
       "package": "com.sumit.unitalk",
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
-
     "plugins": [
       "expo-router",
       [
@@ -32,21 +29,19 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-font"
     ],
-
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
     },
-
     "extra": {
       "router": {},
       "eas": {
         "projectId": "e6fe9eef-8b29-4956-8c00-44fdcdee4182"
       }
     },
-
     "owner": "unitalk2026"
   }
 }
